@@ -1,0 +1,1468 @@
+---
+title: "ask"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    collapsed: false
+    number_sections: false
+    toc_depth: 1
+    #code_folding: hide
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+library(knitr)  
+library(reticulate)  
+knitr::knit_engines$set(python = reticulate::eng_python)  
+```
+
+# 🤔**Ask**:
+
+## The business task
+
+Analyze smart device usage data in order to gain insight into how people
+are already using their smart devices. Then, using this information,
+give high-level recommendations for how these trends can inform
+Bellabeat marketing strategy.
+
+**How current user trends can guide marketing strategy?**
+
+## The stakeholders
+
+-   **Urška Sršen**: Bellabeat's cofounder and Chief Creative Oﬃcer
+-   **Sando Mur**: Mathematician and Bellabeat's cofounder; key member
+    of the Bellabeat executive team
+-   **Bellabeat marketing analytics team**: A team of data analysts
+    responsible for collecting, analyzing, and reporting data that helps
+    guide Bellabeat's marketing strategy.
+
+# 💻**Prepare**:
+
+## Getting the data
+
+To answer our main question (*How current user trends can guide
+marketing strategy?*), we will use data from [**FitBit Fitness Tracker
+Data**](https://www.kaggle.com/arashnic/fitbit) (CC0: Public Domain,
+dataset made available through
+[Mobius](https://www.kaggle.com/arashnic)). This Kaggle data set
+contains personal ﬁtness tracker from thirty three ﬁtbit users. These
+eligible Fitbit users consented to the submission of personal tracker
+data, including minute-level output for physical activity, heart rate,
+and sleep monitoring. It includes information about daily activity,
+steps, and heart rate that can be used to explore users' habits.
+
+Inside the `fitbit` folder, a folder named
+`Fitabase Data 4.12.16-5.12.16` stores 18 `csv` files with tracker data,
+including minute-level output for physical activity, heart rate, and
+sleep monitoring.
+
+To better read our files let's create a `path` variable to store the
+folder path containing all `csv` files.
+
+```{python}
+import os 
+path = './Fitabase Data 4.12.16-5.12.16'
+## Get the full path of all the csv files.
+full_path_list = [os.path.join(path,f) for\
+f in os.listdir(path) if os.path.isfile(os.path.join(path,f)) ]
+print('now fo available filess ' + str(len(full_path_list)))
+full_path_list
+```
+
+Checking for integrity of our path list (should contain 18 file paths):
+
+# 🧰**Process**
+
+To clean and transform our data we will create a database using the
+[sqlite3](https://docs.python.org/3/library/sqlite3.html) module as an
+interface for [SQLite](https://www.sqlite.org/index.html) in **Python**.
+By doing this we can use SQL queries to quickly interact with our data.
+
+## Creating the database
+
+First of all, we need to create the database. We do this by creating a
+*connection* and starting a *cursor* in the desired database:
+
+```{python}
+import sqlite3 as sql
+con = sql.connect("fitbit.db")
+cur = con.cursor()
+```
+
+To easily insert all `csv` files as different tables in our database we
+can create a helper function to return the name of the `csv` file
+(without extension) to use as the table name.
+
+```{python}
+def get_table_name(full_path_list, i):
+    '''Returns name of csv file with no extension'''
+    return full_path_list[i].split('/')[-1].split('.')[0]
+```
+
+Having this we can use the `pandas` library to insert all files as
+tables in our **fitbit.db** database. We do this by first reading the
+file as a pandas dataframe object (using the `read_csv` method) then we
+insert it into the database using the `to_sql` method with the proper
+connection to the database.
+
+```{python}
+import pandas as pd
+for i in range(0,18):
+    pd.read_csv(full_path_list[i]).to_sql(get_table_name(full_path_list, i), con, if_exists='append', index=False)
+```
+
+The `if_exists='append'` argument ensures we append the table to the
+existing database.
+
+We can do a quick sanity check and use `pandas` again to create a
+dataframe object from a simple query to the newly populated database.
+
+```{python}
+import pandas as pd
+# Simple query
+df = pd.read_sql(f'SELECT * FROM {get_table_name(full_path_list, 0)}', con)
+```
+
+Now we can use the `head()` method to show the first 5 rows of data from
+the first inserted table.
+
+```{python }
+df.head()
+```
+
+Finally, we can list all tables in our data base using a SQL query:
+
+```{python}
+# Listing all tables
+cur.execute("SELECT name FROM sqlite_master WHERE type='table';")
+tables = cur.fetchall()
+print(tables)
+print(f'Total of {len(tables)} tables in database.')
+```
+
+## Checking for redundant information
+
+We will work with the tables with daily logs of activitys. There are a
+total of 5 tables with `daily` our `Day` in their names. Let's inspect
+them for redundant information.
+
+To take a closer look at the daily data, let's read table
+`dailyActivity_merged` as a dataframe.
+
+```{python}
+dailyActivity_df = pd.read_sql(f'SELECT * FROM dailyActivity_merged', con)
+
+dailyActivity_df.head()
+```
+
+We do the same for the `dailyIntensities_merged` table.
+
+```{python}
+dailyIntensities_df = pd.read_sql(f'SELECT * FROM dailyIntensities_merged', con)
+
+dailyIntensities_df.head()
+```
+
+These tables appear to have shared columns. Let's first find out if they
+have the same number of rows.
+
+```{python}
+print(f'dailyActivity_df length: {len(dailyActivity_df)}')
+print(f'dailyIntensities_df length: {len(dailyIntensities_df)}')
+```
+
+The table `dailyIntensities_merged` seems to hold redundant information
+already contained in `dailyActivity_merged`. The bellow query should
+return empty if all 8 columns related to Distance and Minutes of
+activity are redundant between these tables.
+
+```{python}
+query = """
+SELECT VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, SedentaryActiveDistance, VeryActiveMinutes,
+       FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes
+FROM dailyActivity_merged
+EXCEPT
+SELECT VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, SedentaryActiveDistance, VeryActiveMinutes,
+       FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes
+FROM dailyIntensities_merged;
+"""
+cur.execute(query)
+print(cur.fetchall())
+
+```
+
+The same ideia applies to tables `dailyActivity_merged` and
+`dailySteps_merged`. Both have columns related to total steps taken by
+date. In the former table this column is named `TotalSteps` and in the
+latter, `StepTotal`. Again, we can execute a EXCEPT statement to check
+if columns are redundant:
+
+```{python}
+query = """
+SELECT TotalSteps from dailyActivity_merged
+EXCEPT
+SELECT StepTotal from dailySteps_merged;
+"""
+cur.execute(query)
+print(cur.fetchall())
+```
+
+We repeat the same process for column `Calories` in
+`dailyCalories_merged`:
+
+```{python}
+query = """
+SELECT Calories from dailyActivity_merged
+EXCEPT
+SELECT Calories from dailyCalories_merged;
+"""
+cur.execute(query)
+print(cur.fetchall())
+```
+
+So, tables `dailyIntensities_merged`, `dailySteps_merged` and
+`dailyCalories_merged` will not be used further as all information on
+them is contained in table `dailyActivity_merged`.
+
+## Updating table to better read date information
+
+We can update the ActivityDate column in `dailyActivity_merged` table to
+match the standard **YYY-MM-DD** from SQLite.
+
+-   **RUN THIS ONLY ONCE AT IT CHANGES THE DATABASE**
+
+```{python}
+update_date = """
+UPDATE dailyActivity_merged set ActivityDate = 
+	SUBSTR(ActivityDate, -4)
+	|| "-" ||
+	CASE
+		WHEN LENGTH(
+			SUBSTR( -- picking month info
+				ActivityDate, 1, INSTR(ActivityDate, '/') - 1
+			)
+		) > 1 THEN 
+			SUBSTR( -- picking month info
+				ActivityDate, 1, INSTR(ActivityDate, '/') - 1
+			)
+		ELSE '0' ||
+			SUBSTR( -- picking month info
+				ActivityDate, 1, INSTR(ActivityDate, '/') - 1
+			)
+	END
+	|| "-" || 
+	CASE
+	WHEN LENGTH(
+		SUBSTR( -- picking day info
+			SUBSTR(ActivityDate, INSTR(ActivityDate, '/') + 1), -- pick substring starting after first /
+			1,  -- start new substring at first character of newly selected substring
+			INSTR(SUBSTR(ActivityDate, INSTR(ActivityDate, '/') + 1), '/') - 1 -- go all the way to next /
+		)
+	) > 1 THEN 
+		SUBSTR( -- picking day info
+			SUBSTR(ActivityDate, INSTR(ActivityDate, '/') + 1), -- pick substring starting after first /
+			1,  -- start new substring at first character of newly selected substring
+			INSTR(SUBSTR(ActivityDate, INSTR(ActivityDate, '/') + 1), '/') - 1 -- go all the way to next /
+		)
+	ELSE '0' ||
+		SUBSTR( -- picking day info
+			SUBSTR(ActivityDate, INSTR(ActivityDate, '/') + 1), -- pick substring starting after first /
+			1,  -- start new substring at first character of newly selected substring
+			INSTR(SUBSTR(ActivityDate, INSTR(ActivityDate, '/') + 1), '/') - 1 -- go all the way to next /
+		)
+	END;
+"""
+cur.execute(update_date)
+con.commit()
+con.close()
+```
+
+To commit the changes we use the `commit()` method in our sql cursor. We
+can close our connection to the database and check if tables were
+updated.
+
+## Data reagrding sleeping habbits
+
+Beyond our `dailyActivity_merged` table, there is a separate table
+holding sleep information. We can do a query to inspect the table.
+
+```{python}
+# Connect again to database
+con = sql.connect("fitbit.db")
+cur = con.cursor()
+sleep_query = """
+SELECT
+	*
+FROM
+	sleepDay_merged;
+"""
+
+sleep_df = pd.read_sql(sleep_query, con)
+sleep_df.head()
+```
+
+Updating the day to match SQLite format `YYYY-MM-DD` (**execute only
+once**):
+
+```{python}
+update_date = """
+UPDATE sleepDay_merged set SleepDay = 
+	SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), -4)
+	|| "-" ||
+	CASE
+		WHEN LENGTH(
+			SUBSTR( -- picking month info
+				SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), 1, INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') - 1
+			)
+		) > 1 THEN 
+			SUBSTR( -- picking month info
+				SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), 1, INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') - 1
+			)
+		ELSE '0' ||
+			SUBSTR( -- picking month info
+				SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), 1, INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') - 1
+			)
+	END
+	|| "-" || 
+	CASE
+	WHEN LENGTH(
+		SUBSTR( -- picking day info
+			SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') + 1), -- pick substring starting after first /
+			1,  -- start new substring at first character of newly selected substring
+			INSTR(SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') + 1), '/') - 1 -- go all the way to next /
+		)
+	) > 1 THEN 
+		SUBSTR( -- picking day info
+			SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') + 1), -- pick substring starting after first /
+			1,  -- start new substring at first character of newly selected substring
+			INSTR(SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') + 1), '/') - 1 -- go all the way to next /
+		)
+	ELSE '0' ||
+		SUBSTR( -- picking day info
+			SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') + 1), -- pick substring starting after first /
+			1,  -- start new substring at first character of newly selected substring
+			INSTR(SUBSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), INSTR(SUBSTR(SleepDay, 1, LENGTH(SleepDay) - 12), '/') + 1), '/') - 1 -- go all the way to next /
+		)
+	END;
+"""
+cur.execute(update_date)
+con.commit()
+con.close()
+```
+
+```{python}
+con = sql.connect("fitbit.db")
+cur = con.cursor()
+```
+
+Now we can check if the updates are correct:
+
+-   For the sleep table:
+
+```{python}
+sleep_query = """
+SELECT *,
+	STRFTIME('%w',SleepDay) dow
+FROM sleepDay_merged;
+"""
+
+sleep_df = pd.read_sql(sleep_query, con)
+sleep_df.head()
+```
+
+The date now is in the proper `YYYY-MM-DD` format.
+
+-   For the activity table:
+
+```{python}
+dailyActivity_df = pd.read_sql('SELECT * FROM dailyActivity_merged', con)
+dailyActivity_df.head()
+```
+
+Again, the dates are now in the proper format.
+
+As was done in the sleep dataframe, we can use the function `STRFTIME()`
+from SQLite to extract information on the day, month, year and day of
+the week (*dow*) from the formated dates:
+
+```{python}
+full_info_activity = """
+SELECT *,
+	STRFTIME('%d',ActivityDate) day,
+	STRFTIME('%m',ActivityDate) month,
+	STRFTIME('%Y',ActivityDate) year,
+	STRFTIME('%w',ActivityDate) dow
+FROM dailyActivity_merged;
+"""
+
+full_dailyActivity_df = pd.read_sql(full_info_activity, con)
+full_dailyActivity_df.head()
+```
+
+We saved the resulting query in a larger dataframe named
+`full_dailyActivity_df`. The first 5 rows of this dataframe are as
+follows.
+
+# 🧑🏻‍💻**Analyze**
+
+## Creating usefull dataframes
+
+To ease our analyses further down the road, we can use our updated
+tables to create helper dataframes.
+
+First, a sanity check on our daily activity table:
+
+```{python}
+# Different users
+cur.execute("SELECT COUNT(DISTINCT Id) FROM dailyActivity_merged;")
+print('Different users: ', cur.fetchall()[0][0])
+```
+
+### Data on Average Calories, Steps and Distance by Id and by day of the week
+
+```{python}
+# Average Calories, Steps and Distance by Id and by day of the week
+query = """
+SELECT 
+	Id,
+	STRFTIME('%w', ActivityDate) dow,
+	ROUND(AVG(Calories),2) AS avg_calories,
+	ROUND(AVG(TotalSteps),2) AS avg_steps,
+	ROUND(AVG(TotalDistance),2) AS avg_distance
+FROM dailyActivity_merged
+GROUP BY Id, STRFTIME('%w', ActivityDate);
+"""
+
+activity_dist = pd.read_sql(query, con)
+activity_dist.head()
+```
+
+### "Boolean" column to check if date corresponds to weekend
+
+```{python}
+weekend_query = """
+SELECT 
+	Id,
+	ActivityDate,
+	SedentaryMinutes,
+	VeryActiveMinutes,
+	FairlyActiveMinutes,
+	LightlyActiveMinutes,
+	Calories,
+	TotalSteps,
+	TotalDistance,
+	CASE 
+		WHEN STRFTIME('%w',ActivityDate) IN ('0','6')
+			THEN 1
+		ELSE 0
+	END weekend
+FROM dailyActivity_merged;
+"""
+
+weekend_check = pd.read_sql(weekend_query, con)
+
+weekend_check.head()
+```
+
+## NOTE: day of week 0-6 with Sunday==0
+
+### Joining activity data with sleep data
+
+```{python}
+join_query = """
+SELECT 
+	A.Id,
+	A.ActivityDate,
+	A.SedentaryMinutes,
+	A.LightlyActiveMinutes,
+	S.TotalMinutesAsleep
+FROM 
+	dailyActivity_merged A
+INNER JOIN sleepDay_merged S
+ON 
+	A.Id = S.Id AND
+    A.ActivityDate = S.SleepDay;
+"""
+activity_sleep_df = pd.read_sql(join_query, con)
+
+activity_sleep_df.head()
+```
+
+## **Initial exploratory visualizations**
+
+### **How users spend their activity time?**
+
+In our `dailyActivity_df` there are four measures of how users spend
+their time: \* `VeryActiveMinutes` that lead to `VeryActiveDistance` \*
+`FairlyActiveMinutes` that lead to `ModeratelyActiveDistance` \*
+`VeryLightlyActiveMinutes` that lead to `LightActiveDistance` \*
+`SedentaryMinutes` that lead to `SedentaryActiveDistance`
+
+We can plot each pair in a **scatter plot** (*Distance vs.* Minutes)
+with a regression line to get estimate of the *speed* of users during
+these activities. To ease the comparison, we'll plot all four graphs
+with shared y-scale.
+
+```{python}
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set(rc={'figure.figsize': (10, 6)})
+sns.set_style('whitegrid')
+sns.set_palette('Set2')
+
+
+fig, axes = plt.subplots(1, 4, figsize=(15, 5), sharey=True)
+fig.suptitle('Distance per Minutes given kind of Activity')
+sns.regplot(data = dailyActivity_df, x = 'VeryActiveMinutes', y = 'VeryActiveDistance', ax=axes[0])
+axes[0].set_xlim([0,500])
+sns.regplot(data = dailyActivity_df, x = 'FairlyActiveMinutes', y = 'ModeratelyActiveDistance', ax=axes[1])
+axes[1].set_xlim([0,500])
+sns.regplot(data = dailyActivity_df, x = 'LightlyActiveMinutes', y = 'LightActiveDistance', ax=axes[2])
+axes[2].set_xlim([0,500])
+sns.regplot(data = dailyActivity_df, x = 'SedentaryMinutes', y = 'SedentaryActiveDistance', ax=axes[3])
+axes[3].set_xlim([0,500]);
+
+plt.show()
+
+
+
+```
+
+**VeryActive** distances are *traveled* in shorter times (that is, they
+have larger speeds represented by steeper regression lines).
+*FairlyActiveMinutes* and *LightlyActiveMinutes* follow in speed. **It
+would be interesting to know how this classification is done to actually
+understand the difference between "Light" activities and "Moderate"
+activities.**
+
+### **How does the number of steps taken in a day affect the amount of calories burned?**
+
+```{python}
+sns.regplot(data = full_dailyActivity_df, x= 'TotalSteps', y ='Calories');
+plt.show()
+
+```
+
+Once more, as expected the amount of calories burned in a day grows as
+the user takes more steps. An inetersting fact is that the intercept of
+the regression line represents the amount of burned calories in a day
+with **no steps** taken. This is the amount of calories users are
+burning in a very sedentary day. According to the [Healthline
+site](https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),
+this number corresponds to the *basal metabolic rate*:
+
+> Your basal metabolic rate (BMR), on the other hand, represents the
+> number of calories you individually burn a day at rest, or while
+> you're sedentary. This includes sleeping and sitting.
+
+This value can be calculated (again referring to
+[Healthline](https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn))
+if we know the user's sex, weight, height and age. In their own
+calculations, a 35-year-old man who weighs 175 pounds and is 5 feet 11
+inches would have a *BMR* of 1,816 calories and a 35-year-old woman who
+weighs 135 pounds and is 5 feet, 5 inches would have a *BMR* of 1,383
+calories.
+
+To compare these estimates with our data, we can get the intercept value
+using the [scikit-learn](https://scikit-learn.org/stable/) package.
+First of all, we'll do the necessary imports.
+
+```{python}
+import numpy as np
+import sklearn 
+import sklearn.linear_model
+# impor 
+from sklearn.linear_model import LinearRegression
+```
+
+Now we define our inputs (`X`) and outputs (`y`) for the regression.
+This should be arrays so we take the `.values` from our dataframes:
+
+```{python}
+X = full_dailyActivity_df['TotalSteps'].values.reshape((-1, 1))
+y = full_dailyActivity_df['Calories'].values
+```
+
+We call `.reshape()` on `X` because this array is required to be
+two-dimensional, or to be more precise, to have one column and as many
+rows as necessary. That's exactly what the argument (-1, 1) of
+`.reshape()` specifies.
+
+Next, we instantiate the model and fit it to the data
+
+```{python}
+model = LinearRegression()
+model.fit(X, y)
+```
+
+With the fitted model, we can get the intercept value and the slope as
+follows.
+
+```{python}
+print('intercept:', model.intercept_)
+print('slope:', model.coef_)
+```
+
+With these, we would like to draw the regression line in the same figure
+as the scatter plot for our data and see if the fit is similar to that
+obtained with seaborn's regplot. To actually draw the line, we define a
+`abline` function to use matplotlib to draw a line in 2D space from the
+slope and intercept.
+
+```{python}
+def abline(slope, intercept):
+    """Plot a line from slope and intercept"""
+    axes = plt.gca()
+    x_vals = np.array(axes.get_xlim())
+    y_vals = intercept + slope * x_vals
+    plt.plot(x_vals, y_vals, color= 'r', ls = '--')
+plt.show()
+
+
+sns.scatterplot(data = full_dailyActivity_df, x= 'TotalSteps', y ='Calories')
+abline(model.coef_, model.intercept_);
+plt.show()
+```
+
+That looks good! And, from our user data we see that the predicted *BMR*
+is \~1665.74 (between those predicted for the 35-year-old woman and
+man). We can further get information on the *BMR* of our users if we
+filter only the data points with zero steps taken and get the statistics
+on the Calories distribution. This can be done with the `describe`
+method from `pandas` along with the mask for only `TotalSteps = 0`.
+
+```{python}
+full_dailyActivity_df[full_dailyActivity_df['TotalSteps']==0]['Calories'].describe()
+full_dailyActivity_df[full_dailyActivity_df['Calories']==0]
+```
+
+We see that the minimum is 0 (seems like an outlier since 0 calories
+burned in a day is impossible) and the maximum is 2664. We can also see
+some quartiles along with mean and standard deviation.
+
+Let's inspect the possible outliers:
+
+**In SQL**: we can have this same output using SQL:
+
+```{python}
+query = """
+SELECT *,
+	STRFTIME('%d',ActivityDate) day,
+	STRFTIME('%m',ActivityDate) month,
+	STRFTIME('%Y',ActivityDate) year,
+	STRFTIME('%w',ActivityDate) dow
+FROM 
+	dailyActivity_merged
+WHERE
+	Calories = 0;
+"""
+
+outliers_calories = pd.read_sql(query, con)
+
+outliers_calories
+```
+
+There are 4 rows with all zero values except for the `SedentaryMinutes`
+column. In this column we see that users spent 1440 minutes of sedentary
+activity in a single day. That's the whole day (!): 1440minutes divided
+by 60minutes/hour = 24h. So, it seems the tracker may have been turned
+off the entire day our experience some malfunction. We should get rid of
+these data points in further analysis.
+
+We redefine our `full_dailyActivity_df` dropping the outliers:
+
+```{python}
+full_info_activity = """
+SELECT *,
+	STRFTIME('%d',ActivityDate) day,
+	STRFTIME('%m',ActivityDate) month,
+	STRFTIME('%Y',ActivityDate) year,
+	STRFTIME('%w',ActivityDate) dow
+FROM 
+	dailyActivity_merged
+WHERE
+	Calories <> 0;
+"""
+
+full_dailyActivity_df = pd.read_sql(full_info_activity, con)
+len(full_dailyActivity_df)
+
+
+```
+
+Our data frame is now 936 rows long, given we dropped the four outliers.
+We can now see if these made a difference in the regression parameters.
+To simplify our flow, let's turn the regression process into a single
+function:
+
+```{python}
+def get_regression(full_dailyActivity_df, x ='TotalSteps', y = 'Calories'):
+    X = full_dailyActivity_df[x].values.reshape((-1, 1))
+    y = full_dailyActivity_df[y].values
+
+    model = LinearRegression()
+    model.fit(X, y)
+
+    print('intercept:', model.intercept_)
+    print('slope:', model.coef_)
+
+    sns.scatterplot(data = full_dailyActivity_df, x= x, y =y)
+    # plt.title('Calories burned by number of steps taken')
+    abline(model.coef_, model.intercept_);
+    plt.show()
+    return (model.intercept_, model.coef_)
+
+get_regression(full_dailyActivity_df)   
+```
+
+Wihtout the outliers, our fit has a slightly higher intercept of
+\~1689.15 (correspondong to the *BMR*).
+
+### **Distribution according to type of activity**
+
+Excluding `SedentaryMinutes`, all users spend their daily time between
+three types of activities: \* `VeryActiveMinutes` \*
+`FairlyActiveMinutes` \* `VeryLightlyActiveMinutes`
+
+We can use **histograms** to check how are this *minutes* distributed
+accross users:
+
+```{python}
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution according to activity type')
+
+sns.histplot(data = full_dailyActivity_df, x = 'VeryActiveMinutes', ax = axes[0]);
+
+
+sns.histplot(data = full_dailyActivity_df, x = 'FairlyActiveMinutes', ax = axes[1]);
+
+
+sns.histplot(data = full_dailyActivity_df, x = 'LightlyActiveMinutes', ax = axes[2]);
+plt.show()
+```
+
+We can see from these plots that a great number of users (over 400)
+spend very few minutes as Very or Fairly Active. The distribution of
+`LightlyActiveMinutes` on the other hand is very symmetrical exluding
+the very low minutes.
+
+There is an issue here, however: it is not clear if all users were using
+the tracker during the entire day in the analysed period. If a user logs
+the whole day, then the sum
+`VeryActiveMinutes + FairlyActiveMinutes + LightlyActiveMinutes + SedentaryMinutes`
+should equal 1440 (the total number of minutes in a day).
+
+Let's use SQL to select only those points where this condition is true:
+
+```{python}
+full_day_activity = """
+SELECT *,
+	STRFTIME('%d',ActivityDate) day,
+	STRFTIME('%m',ActivityDate) month,
+	STRFTIME('%Y',ActivityDate) year,
+	STRFTIME('%w',ActivityDate) dow,
+	VeryActiveMinutes+FairlyActiveMinutes+LightlyActiveMinutes+SedentaryMinutes AS TotalMinutes
+FROM 
+	dailyActivity_merged
+WHERE
+	Calories <> 0 AND
+	TotalMinutes = 1440;
+"""
+
+logged_day_df = pd.read_sql(full_day_activity, con)
+logged_day_df.head()
+
+
+print(f'There are {len(logged_day_df)} rows where users logged the whole day.')
+
+```
+
+We can, now, see the distributions in these rows:
+
+```{python}
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution according to activity type - Entire day logged')
+
+sns.histplot(data = logged_day_df, x = 'VeryActiveMinutes', ax = axes[0]);
+
+
+sns.histplot(data = logged_day_df, x = 'FairlyActiveMinutes', ax = axes[1]);
+
+
+sns.histplot(data = logged_day_df, x = 'LightlyActiveMinutes', ax = axes[2]);
+plt.show()
+```
+
+The behaviour here is similar. Let's see what happens to the days when
+users did not logged the 24h:
+
+```{python}
+not_full_day = """
+SELECT *,
+	STRFTIME('%d',ActivityDate) day,
+	STRFTIME('%m',ActivityDate) month,
+	STRFTIME('%Y',ActivityDate) year,
+	STRFTIME('%w',ActivityDate) dow,
+	VeryActiveMinutes+FairlyActiveMinutes+LightlyActiveMinutes+SedentaryMinutes AS TotalMinutes
+FROM 
+	dailyActivity_merged
+WHERE
+	Calories <> 0 AND
+	TotalMinutes <> 1440;
+"""
+
+not_logged_day_df = pd.read_sql(not_full_day, con)
+not_logged_day_df.head()  
+
+print(f'There are {len(not_logged_day_df)} rows where users logged parts of the day.')
+
+
+
+
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution according to activity type - Partial day logged')
+
+sns.histplot(data = not_logged_day_df, x = 'VeryActiveMinutes', ax = axes[0]);
+
+sns.histplot(data = not_logged_day_df, x = 'FairlyActiveMinutes', ax = axes[1]);
+
+sns.histplot(data = not_logged_day_df, x = 'LightlyActiveMinutes', ax = axes[2]);
+plt.show()
+```
+
+Ok, now we see a difference! The `LightlyActiveMinutes` distribution is
+very symmetric with no peak at very few minutes of activity. Users who
+log the entire day may end up registering a lot of
+`LightlyActiveMinutes` while those who log only a part of the day might
+be registering only activities with higher demand.
+
+Let's see the distribution of total logged time in this second group.
+
+```{python}
+sns.histplot(data = not_logged_day_df, x = 'TotalMinutes');
+plt.show()
+```
+
+### **Sleeping habits and week day distributions**
+
+We can use **histograms** again to see the distribution of sleeping time
+for all users.
+
+```{python}
+sns.histplot(data = sleep_df, x = 'TotalMinutesAsleep');
+plt.show()
+```
+
+According to the
+[CDC](https://www.cdc.gov/sleep/about_sleep/how_much_sleep.html) an
+adult should get **7 or more** hours of sleep per day. This corresponds
+to 420 minutes. We can plot a line at this value to see how the users do
+against this recommendation.
+
+```{python}
+sns.histplot(data = sleep_df, x = 'TotalMinutesAsleep')
+plt.axvline(420, 0, 65, color='red');
+plt.show()
+```
+
+The distribution is somewhat symmetric with 231 rows to the right of the
+line (including the line) and 182 rows to the left.
+
+We can further inspect the distribution of minutes asleep per week day:
+
+```{python}
+sns.boxplot(x="dow", y="TotalMinutesAsleep", data=sleep_df,
+            order = ['0','1','2','3','4','5','6']);
+plt.show()           
+```
+
+We can order this plot by the day of the week:
+
+```{python}
+sns.boxplot(x="dow", y="TotalMinutesAsleep", data=sleep_df,
+            order = ['0','1','2','3','4','5','6']);
+plt.show()           
+```
+
+There is no clear distinction between the days of the week. However we
+can see that sunday has the largest median for `TotalMinutesAsleep` and
+saturday appears to be the most spread oout distribution.
+
+While we are looking at distributions across days of the week, we can
+use our `activity_dist` dataframe to inspect the average values of
+steps, calories and distances:
+
+```{python}
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution of average values across days of the week')
+
+sns.boxplot(x="dow", y="avg_steps", data=activity_dist, ax=axes[0]);
+
+sns.boxplot(x="dow", y="avg_calories", data=activity_dist, ax=axes[1]);
+
+sns.boxplot(x="dow", y="avg_distance", data=activity_dist, ax=axes[2]);
+plt.show()
+```
+
+### **Distribution of calories and distance**
+
+```{python}
+fig, axes = plt.subplots(1, 2, figsize=(22, 5))
+fig.suptitle('Distribution of average values across days of the week')
+
+sns.histplot(data=full_dailyActivity_df, x="Calories", ax = axes[0]);
+
+sns.histplot(data=full_dailyActivity_df, x="TotalDistance", ax = axes[1]);
+plt.show()
+```
+
+The distribution of burned calories is a bit skewed to the low calories
+while the distance distribtion is higly skewed to lower distances.
+
+### **How does sedentary minutes change in weekends?**
+
+First of all, not considering the day of the week, let's take a look at
+the distribtuion of `SedentaryMinutes`:
+
+```{python}
+sns.histplot(data = weekend_check, x = 'SedentaryMinutes');
+plt.show()
+```
+
+To get a visual on how this distribution depends on weekends we can use
+our `weekend_check` dataframe and use a facetplot to see two graphs (for
+weekend being true or false). Besides this, I'll normalize the
+distributions so we can compare both graphs (because there a lot fewer
+weekends than week days - sadly...).
+
+```{python}
+g = sns.FacetGrid(data = weekend_check, col="weekend", height=6, aspect=.7)
+g.map(sns.histplot, "SedentaryMinutes", kde=True, stat='density');
+plt.show()
+```
+
+It seems there are two groups of users based on the distribution of
+`SedentaryMinutes`. We can do a query to get the average
+`SedentaryMinutes` per user:
+
+```{python}
+query = """
+SELECT
+	Id,
+	AVG(SedentaryMinutes) AS AvgSedentaryMinutes
+FROM
+	dailyActivity_merged
+GROUP BY
+	Id
+ORDER BY
+	AvgSedentaryMinutes DESC;
+"""
+avg_sed_minutes = pd.read_sql(query, con)
+
+avg_sed_minutes
+```
+
+A bar plot will be nice to visually see this numbers:
+
+```{python}
+sns.barplot(data = avg_sed_minutes,
+            x = 'Id', y = 'AvgSedentaryMinutes',
+            order=avg_sed_minutes.sort_values('AvgSedentaryMinutes',ascending = True)['Id'])
+plt.xticks(rotation=70);
+plt.show()
+```
+
+The average `SedentaryMinutes` is given by:
+
+```{python}
+cur.execute("SELECT	AVG(SedentaryMinutes) FROM dailyActivity_merged;")
+sedMinAvg = cur.fetchall()[0][0]
+print(sedMinAvg)
+```
+
+We can create a column to identify this user group. We'll call group 1
+those with `SedentaryMinutes` above average and group 0, those bellow.
+
+```{python}
+def is_above(user):
+    '''Returns 1 if user has average SedentaryMinutes above the total average and 0 otherwise'''
+    return int(avg_sed_minutes[avg_sed_minutes['Id']==user]['AvgSedentaryMinutes'].values[0] > sedMinAvg)
+
+weekend_check['UserGroup'] = weekend_check['Id'].apply(is_above)
+
+# Rows in each group
+print(f'Rows in group 0 (Less Sedentary group):')
+print(len(weekend_check[weekend_check['UserGroup']==0]))
+print(f'Rows in group 1 (More Sedentary group):')
+print(len(weekend_check[weekend_check['UserGroup']==1]))
+
+#Distinct users in each group
+print('Distinct users in group 0 (Less Sedentary group)')
+print(weekend_check[weekend_check['UserGroup']==0]['Id'].nunique())
+
+print('Distinct users in group 1 (More Sedentary group)')
+print(weekend_check[weekend_check['UserGroup']==1]['Id'].nunique())
+
+
+
+
+
+print('Using a boxplot we can clearly see the difference of these groups:')
+
+sns.boxplot(x="UserGroup", y="SedentaryMinutes", data=weekend_check);
+
+plt.show()
+
+sns.countplot(data=weekend_check, x = 'UserGroup');
+plt.show()
+```
+
+Group 1 is the more sedentary one as it has a higher median for the
+`SedentaryMinutes` distribution.
+
+#### **Does this behaviour persist on weekends?**
+
+```{python}
+sns.boxplot(x="UserGroup", y="SedentaryMinutes", hue = 'weekend', data=weekend_check);
+plt.show()
+```
+
+#### **For the less sedentary group, is there a difference in the shape of the distribution on weekends?**
+
+```{python}
+g = sns.FacetGrid(weekend_check[weekend_check['UserGroup']==0], col="weekend", height=6, aspect=.7)
+
+g.map(sns.histplot, "SedentaryMinutes", kde=True, stat='density');
+plt.show()
+```
+
+During weekends the distribution of sedentary minutes is a bit more
+skewed to the lower numbers, so users may be more active during weekends
+(makes sense since during the week there is probably a lot of sitting
+down and working...).
+
+### **Do average values change on weekends?**
+
+To inspect how does sedentary minutes, calories, steps and distance
+change during the weekend we'll do a trick with temp tables (there is
+probably a better way, but is the one that worked first for me...).
+
+Steps to our analysis: \* Create a temp table to include a *weekend*
+boolean column \* Get the averages of queried columns in the temp table
+using a GROUP BY statement.
+
+```{python}
+  # Create temporary table for weekend column
+temp_query = """
+CREATE TEMP TABLE weekendTable
+AS
+SELECT 
+	SedentaryMinutes,
+	Calories,
+	TotalSteps,
+	TotalDistance,
+	CASE 
+		WHEN STRFTIME('%w',ActivityDate) IN ('0','6')
+			THEN 1
+		ELSE 0
+	END weekend
+FROM dailyActivity_merged
+-- Created temp table to check for weekends on weekend column
+"""
+cur.execute(temp_query)
+
+
+
+
+
+# Get averages from SQL GROUP BY statement
+avg_query = """
+SELECT 
+	weekend,
+	AVG(SedentaryMinutes),
+	AVG(Calories),
+	AVG(TotalSteps),
+	AVG(TotalDistance)	
+FROM weekendTable
+GROUP BY weekend;
+"""
+weekend_avgs = pd.read_sql(avg_query, con)
+
+
+
+
+weekend_avgs
+```
+
+### **Sleeping habits for each user group**
+
+```{python}
+sleep_df['UserGroup'] = sleep_df['Id'].apply(is_above)
+sns.boxplot(x="UserGroup", y="TotalMinutesAsleep", data=sleep_df);
+plt.show()
+sns.countplot(data = sleep_df, x = 'UserGroup');
+plt.show()
+sleep_df['UserGroup'].value_counts()
+
+
+print('Distinct users in group 0 (Less Sedentary group)')
+print(sleep_df[sleep_df['UserGroup']==0]['Id'].nunique())
+
+print('Distinct users in group 1 (More Sedentary group)')
+print(sleep_df[sleep_df['UserGroup']==1]['Id'].nunique())
+```
+
+Number of rows in each group (in the `sleep_df` dataframe):
+
+There is a huge imbalance here: there are 364 records of daily sleep
+activity for the less sedentary group while only 49 from the more
+sedentary group.
+
+The total number of distinct users from the less sedentary group is 14
+while for the more sedentary group there are only 10 (out of 19 possible
+ones) distinct users.
+
+## Joinning Ativity data with sleep data
+
+```{python}
+join_query = """
+SELECT 
+	A.Id,
+	A.ActivityDate,
+	A.SedentaryMinutes,
+	S.TotalMinutesAsleep
+FROM 
+	dailyActivity_merged A
+INNER JOIN sleepDay_merged S
+ON 
+	A.Id = S.Id AND
+    A.ActivityDate = S.SleepDay;
+"""
+sns.set(rc={'figure.figsize': (10, 6)})
+sns.set_style('whitegrid')
+sns.set_palette('Set2')
+
+
+activity_sleep_df = pd.read_sql(join_query, con)
+activity_sleep_df.head()
+
+sns.regplot(data = activity_sleep_df,
+                x = 'TotalMinutesAsleep',
+                y = 'SedentaryMinutes');
+
+plt.show()
+```
+
+This is an interesting graph: there is a clear tendency of users with
+more minutes asleep to be less sedentary. So, one conclusion might be
+that the more you sleep, the more active you are during the day!
+
+\# 📊\*\*Share\*\*
+
+Now that we have our analysis and found some interesting patterns, let's
+try to answer our original business question through a story told by our
+main visuals.
+
+Just as a reminder, we phrased our question as
+
+\> \*\*How current user trends can guide marketing strategy?\*\*
+
+\-\--
+
+Before we start \*telling our story with the data\*, let's set the color
+palette for our graphs to match that of the company logo (as seen to the
+left). We can easily do this with Seaborn's \`set_pallete()\` method. To
+improve readability, we will also increase overall font sizes with the
+\`set_context()\` method.
+
+We'll start our sharing with some basic descriptions. Our dataset has
+data on \*\*33 different users\*\* who logged their daily activities
+during the period \*\*between 03.12.2016-05.12.2016\*\*.
+
+\## \*\*Describing the data\*\*
+
+The main data on daily activities is in the \`full_dailyActivity_df\`
+and we can get descriptive statistics with the \`describe()\` method:
+
+```{python}
+sns.set_palette("flare")
+sns.set_context("paper", font_scale=2)
+plt.show()
+```
+
+```{python}
+full_dailyActivity_df.loc[:, full_dailyActivity_df.columns != 'Id'].describe().T
+
+```
+
+For the sleep habits data, we can use the \`describe()\` method on the
+\`sleep_df\` dataframe:
+
+```{python}
+sleep_df.loc[:, sleep_df.columns != 'Id'].describe()
+```
+
+\## \*\*Distributions\*\*
+
+\### \*\*By acivity type\*\*
+
+Three types of activities:
+
+\* Very Active
+
+\* Fairly Active
+
+\* Lightly Active
+
+```{python}
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution according to activity type')
+
+sns.histplot(data = full_dailyActivity_df, x = 'VeryActiveMinutes', ax = axes[0]);
+
+sns.histplot(data = full_dailyActivity_df, x = 'FairlyActiveMinutes', ax = axes[1]);
+
+sns.histplot(data = full_dailyActivity_df, x = 'LightlyActiveMinutes', ax = axes[2]);
+plt.show()
+```
+
+Of all 940 original rows in our data, only 462 rows have partially
+logged their activities in a day. For these records:
+
+```{python}
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution according to activity type - Partial day logged')
+
+sns.histplot(data = not_logged_day_df, x = 'VeryActiveMinutes', ax = axes[0]);
+
+sns.histplot(data = not_logged_day_df, x = 'FairlyActiveMinutes', ax = axes[1]);
+
+sns.histplot(data = not_logged_day_df, x = 'LightlyActiveMinutes', ax = axes[2]);
+plt.show()
+```
+
+The \`LightlyActiveMinutes\` distribution is very symmetric with no peak
+at very few minutes of activity. Users who log the entire day may end up
+registering a lot of \`LightlyActiveMinutes\` while those who log only a
+part of the day might be registering only activities with higher demand.
+
+Let's see the distribution of total logged time in this second group.
+
+```{python}
+sns.histplot(data = not_logged_day_df, x = 'TotalMinutes')
+plt.title('Logged minutes for partially logged days');
+plt.show()
+```
+
+\### \*\*Calories and Distance\*\*
+
+```{python}
+fig, axes = plt.subplots(1, 2, figsize=(22, 5))
+fig.suptitle('Distribution of Calories Burned daily (left) and daily Distance (right)')
+
+sns.histplot(data=full_dailyActivity_df, x="Calories", ax = axes[0]);
+
+sns.histplot(data=full_dailyActivity_df, x="TotalDistance", ax = axes[1]);
+plt.show()
+```
+
+The distribution of burned calories is a bit skewed to the low calories
+while the distance distribtion is highly skewed to lower distances.
+
+\### \*\*Sleeping habits\*\*
+
+```{python}
+sns.histplot(data = sleep_df, x = 'TotalMinutesAsleep')
+plt.title('Daily minutes asleep')
+
+plt.axvline(420, 0, 65, color='black', ls = '--', lw = 3);
+
+plt.annotate('182 records', (100,50))
+plt.annotate('231 records', (650,50))
+plt.annotate('7h of sleep', (380,30), color='red')
+plt.show()
+```
+
+\## \*\*Day of the week: does it make a difference?\*\*
+
+Now that we had a galnce at our data and its distributions, does the day
+of the week make a considerable difference in user behavious to justify
+some marketing or functionality built to target specific days of
+activity?
+
+```{python}
+fig, axes = plt.subplots(1, 3, figsize=(22, 5))
+fig.suptitle('Distribution of average values across days of the week')
+
+sns.boxplot(x="dow", y="avg_steps", data=activity_dist, ax=axes[0]).set_xticklabels(['Sun','Mon','Tue','Wed','Thu','Fri', 'Sat']);
+
+sns.boxplot(x="dow", y="avg_calories", data=activity_dist, ax=axes[1]).set_xticklabels(['Sun','Mon','Tue','Wed','Thu','Fri', 'Sat']);
+
+sns.boxplot(x="dow", y="avg_distance", data=activity_dist, ax=axes[2]).set_xticklabels(['Sun','Mon','Tue','Wed','Thu','Fri', 'Sat']);
+
+plt.show()
+```
+
+With the current data, there is no considerable difference between the
+average Steps Taken, Calories Burned or Distance across different days
+of the week.
+
+\### \*\*Sleep across days of the week\*\*
+
+```{python}
+sns.boxplot(x="dow", y="TotalMinutesAsleep", data=sleep_df,
+            order = ['0','1','2','3','4','5','6']).set_xticklabels(['Sun','Mon','Tue','Wed','Thu','Fri', 'Sat']);
+plt.show()
+```
+
+There is no clear distinction between the days of the week. However we
+can see that sunday has the largest median for \`TotalMinutesAsleep\`
+and saturday appears to be the most spread oout distribution.
+
+\## \*\*Do calories burned depend on steps taken?\*\*
+
+```{python}
+get_regression(full_dailyActivity_df)
+plt.ylabel('Calories')
+plt.title('Daily calories burned by number of steps taken');
+plt.show()
+```
+
+As expected the amount of calories burned in a day grows as the user
+takes more steps. An inetersting fact is that the intercept of the
+regression line represents the amount of burned calories in a day with
+\*\*no steps\*\* taken. This is the amount of calories users are burning
+in a very sedentary day. According to the [Healthline
+site]([https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),](https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),)
+this number corresponds to the \*basal metabolic rate\*:
+
+\> Your basal metabolic rate (BMR), on the other hand, represents the
+number of calories you individually burn a day at rest, or while you're
+sedentary. This includes sleeping and sitting.
+
+To compare these estimates with our data, we can get the intercept value
+with a \*\*simple linear regression\*\*. In our data, this value is
+\~1689.15 Calories. We can get some descriptive statistics for the
+\*BMR\*:
+
+```{python}
+full_dailyActivity_df[full_dailyActivity_df['TotalSteps']==0]['Calories'].describe()
+```
+
+\## \*\*Categorizing users\*\*
+
+Now that we know a bit more about users activities, can we categorize
+our users in a way that is natural from the data?
+
+\### \*\*How much time in a day do users spend being sedentary?\*\*
+
+```{python}
+g = sns.FacetGrid(weekend_check, col="weekend", height=6, aspect=.7)
+g.map(sns.histplot, "SedentaryMinutes", kde=True, stat='density')
+g.fig.subplots_adjust(top=0.8)
+g.fig.suptitle('Daily sedentary minutes')
+axes = g.axes.flatten()
+axes[0].set_title("Weekdays")
+axes[1].set_title("Weekends");
+plt.show()
+```
+
+It seems there are two groups of users based on the distribution of
+\`SedentaryMinutes\`.
+
+We can see the average \`SedentaryMinutes\` per user:
+
+```{python}
+avg_sed_minutes
+```
+
+Calling group 1 the more sedentary one and group 0 the less sedentary
+one, we can ask if \*\*this behaviour persist on weekends?\*\*
+
+```{python}
+sns.boxplot(x="UserGroup", y="SedentaryMinutes", hue = 'weekend', data=weekend_check);
+plt.show()
+```
+
+\### \*\*Do average values change on weekends?\*\*
+
+```{python}
+weekend_avgs
+
+```
+
+\## \*\*Do sleep habits influence sedentary time?\*\*
+
+```{python}
+sns.regplot(data = activity_sleep_df,
+                x = 'TotalMinutesAsleep',
+                y = 'SedentaryMinutes');
+plt.show()
+```
+
+This is an interesting graph: there is a clear tendency of \*\*users
+with more minutes asleep to be less sedentary\*\*. So, one conclusion
+might be that the more you sleep, the more active you are during the
+day!
+
+\-\--
+
+\# 🎬\*\*Act\*\*
+
+Using only the daily activity from our 33 users we reached some
+interesting conclusions!
+
+Top high-level insights:
+
+\* There is \*\*no clear distinction in user activity across different
+days of the week\*\*;
+
+\* The average number of steps taken daily is around 7670. According to
+the
+[CDC]([https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):](https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):)
+
+\> ...higher daily step counts were associated with lower mortality risk
+from all causes.
+
+If our product can output the number of steps in real time, we can
+\*\*motivate users to reach a certain number of steps daily\*\*! Once
+again, the CDC informs us that
+
+\> ...compared with taking 4,000 steps per day, a number considered to
+be low for adults, taking 8,000 steps per day was associated with a 51%
+lower risk for all-cause mortality (or death from all causes). Taking
+12,000 steps per day was associated with a 65% lower risk compared with
+taking 4,000 steps.
+
+\* If the goal is to burn some calories, there is a \*\*linear relation
+between steps taken and calories burned\*\*. Our step monitor could use
+user data to fit a model and predict how many steps a user should take
+to reach a certain amount of calories burned. Further investigation into
+the \*MET\* data could be very useful to this.
+
+\* Regarding sleeping habits, there was a clear decrease of sedentary
+minutes as the number of minutes asleep increased. So, another goal of
+the product could be to motivate users to keep a consistent and
+sufficient sleeping schedule. Going back to the
+[CDC]([https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):](https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):)
+
+\> Being physically active has many benefits, including reducing a
+person's risk of obesity, heart disease, type 2 diabetes, and some
+cancers. And on a daily basis, it can help people feel better and sleep
+better.
+
+\-\--
+
+\# \*\*Thank you so much for reading this project!\*\*
+
+It was a lot of fun and there is surely room for improvement! This is a
+project I truly intent to get back to when my skills and knowledge of
+the field are sharper.
+
+\*\*Any feedback would be amazing!\*\*
+
+Stay safe everyone!
