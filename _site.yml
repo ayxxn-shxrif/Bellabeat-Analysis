@@ -6,11 +6,4 @@ navbar:
       href: index.html
     - text: 'steps'
       href: 'steps.html'
-    - text: "Journal"
-      href: Journal.html
-   
-    - text: "Links"
-      href: Links.html
-    - text: "new"
-      href: new.html
 output_dir: "docs"
