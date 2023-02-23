@@ -1,40 +1,31 @@
 ---
-title: "Home"
-output: html_document
+title: "Bellabeat Case Study"
+output:
+  rmdformats::downcute:
+    downcute_theme: "chaos"
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+    prompt: '$'
+    fig_width: 40  # set figure width to 6 inches
+    fig_height: 40  # set figure height to 4 inches
+    fig_caption: true
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
-<style type="text/css">
-.title {
-  display: none;
-}
 
-#getting-started img {
-  margin-right: 10px;
-}
+# Summary
 
-</style>
+This case study was completed by **Ayaan Sharif** in September 2022 as part of the Google Data Analytics Professional Certificate capstone course. Python and SQL has been used to complete this case study and then hosted online through github pages.
 
-<div class="row" style="padding-top: 30px;">
-<div class="col-sm-6">
-## Google Data Analytics Certificate
+# Unlocking Growth Opportunities for Wellness Tech Company through Smart Device Data Analysis: A Bellabeat Case Study
 
-### Case Study 2: How Can a Wellness Technology Company Play It Smart?
+**Goal**: The goal of this case study is to analyze smart device data to identify new growth opportunities for Bellabeat, a wellness technology company that develops health-focused smart products for women.
 
-As a member of the marketing analytics team at **Bellabeat**, we have been tasked with analyzing smart device data to gain insights into consumer behavior. Our objective is to identify new growth opportunities and guide Bellabeat's marketing strategy based on our findings.
+**Objective**: The objective of the marketing analytics team at Bellabeat is to gain insights into consumer behavior by following a comprehensive data analysis process, which includes asking the right questions, preparing relevant data, processing it using appropriate tools, analyzing the data to identify trends and relationships, sharing findings through visualizations, and presenting final conclusions and recommended approaches to inform Bellabeat's marketing strategy.
 
-To achieve this, we will follow a comprehensive data analysis process, including the following steps:
-
-- **Ask:** Identifying the problem to be solved and how our insights can drive business decisions.
-- **Prepare:** Gathering relevant data, verifying its integrity and credibility, and organizing and storing it.
-- **Process:** Choosing appropriate tools to handle the data, cleaning it, and ensuring it is ready for analysis.
-- **Analyze:** Organizing and formatting the data to answer our questions, performing calculations, and identifying trends and relationships within the data.
-- **Share:** Creating visualizations to share relevant findings and relating them to the original questions.
-- **Act:** Presenting final conclusions and suggested approaches to deal with findings and next steps.
-
-As a high-tech company founded by Urška Sršen and Sando Mur, Bellabeat focuses on developing health-focused smart products that inform and inspire women around the world. By collecting data on activity, sleep, stress, and reproductive health, the company empowers women with knowledge about their own health and habits.
-
-Since its founding in 2013, Bellabeat has grown rapidly, positioning itself as a tech-driven wellness company for women. The company has opened offices around the world and launched multiple products, available through online retailers in addition to their own e-commerce channel. While Bellabeat invests in traditional advertising media, such as radio, billboards, print, and television, the company focuses extensively on digital marketing. This includes investing year-round in Google Search, maintaining active social media pages on Facebook, Instagram, and Twitter, and running video ads on YouTube and display ads on the Google Display Network to support campaigns around key marketing dates.
-
-With the goal of identifying new growth opportunities, our marketing analytics team will focus on analyzing smart device usage data for a Bellabeat product. We will then use these insights to provide high-level recommendations for how these trends can inform Bellabeat's marketing strategy. Once we have completed our data analysis process, we will present our final conclusions and suggested approach to deal with findings and next steps to the Bellabeat team.
-
-</div>
+**Approach**: By collecting data on activity, sleep, stress, and reproductive health, the company empowers women with knowledge about their own health and habits. The marketing analytics team will focus on analyzing smart device usage data for a Bellabeat product and providing high-level recommendations for how these trends can inform Bellabeat’s marketing strategy.

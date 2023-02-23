@@ -1,13 +1,17 @@
 ---
-title: "ask"
+title: "analysis phases"
+date: "`r Sys.Date()`"
+author: Ayaan Sharif
 output:
-  html_document:
-    toc: true
-    toc_float: true
-    collapsed: false
-    number_sections: false
-    toc_depth: 1
-    #code_folding: hide
+  rmdformats::downcute:
+    downcute_theme: "chaos"
+    self_contained: true
+    thumbnails: true
+    lightbox: true
+    gallery: false
+    highlight: tango
+  fig_width: 50  
+  fig_height: 50    
 editor_options: 
   markdown: 
     wrap: 72
@@ -54,21 +58,20 @@ data, including minute-level output for physical activity, heart rate,
 and sleep monitoring. It includes information about daily activity,
 steps, and heart rate that can be used to explore users' habits.
 
-Inside the `fitbit` folder, a folder named
-`Fitabase Data 4.12.16-5.12.16` stores 18 `csv` files with tracker data,
-including minute-level output for physical activity, heart rate, and
-sleep monitoring.
+A folder named`Fitabase Data 4.12.16-5.12.16` stores 18 `csv` files with
+tracker data, including minute-level output for physical activity, heart
+rate, and sleep monitoring.
 
 To better read our files let's create a `path` variable to store the
 folder path containing all `csv` files.
 
-```{python}
+```{python fig.height = 3, fig.width = 5}
 import os 
 path = './Fitabase Data 4.12.16-5.12.16'
 ## Get the full path of all the csv files.
 full_path_list = [os.path.join(path,f) for\
 f in os.listdir(path) if os.path.isfile(os.path.join(path,f)) ]
-print('now fo available filess ' + str(len(full_path_list)))
+print('available files ' + str(len(full_path_list)))
 full_path_list
 ```
 
@@ -491,9 +494,9 @@ activity_sleep_df = pd.read_sql(join_query, con)
 activity_sleep_df.head()
 ```
 
-## **Initial exploratory visualizations**
+## Initial exploratory visualizations
 
-### **How users spend their activity time?**
+### How users spend their activity time?
 
 In our `dailyActivity_df` there are four measures of how users spend
 their time: \* `VeryActiveMinutes` that lead to `VeryActiveDistance` \*
@@ -539,7 +542,7 @@ would be interesting to know how this classification is done to actually
 understand the difference between "Light" activities and "Moderate"
 activities.**
 
-### **How does the number of steps taken in a day affect the amount of calories burned?**
+### How does the number of steps taken in a day affect the amount of calories burned?
 
 ```{python}
 sns.regplot(data = full_dailyActivity_df, x= 'TotalSteps', y ='Calories');
@@ -629,7 +632,7 @@ plt.show()
 ```
 
 That looks good! And, from our user data we see that the predicted *BMR*
-is \~1665.74 (between those predicted for the 35-year-old woman and
+is ~1665.74 (between those predicted for the 35-year-old woman and
 man). We can further get information on the *BMR* of our users if we
 filter only the data points with zero steps taken and get the statistics
 on the Calories distribution. This can be done with the `describe`
@@ -720,13 +723,13 @@ get_regression(full_dailyActivity_df)
 ```
 
 Wihtout the outliers, our fit has a slightly higher intercept of
-\~1689.15 (correspondong to the *BMR*).
+~1689.15 (correspondong to the *BMR*).
 
-### **Distribution according to type of activity**
+### Distribution according to type of activity
 
 Excluding `SedentaryMinutes`, all users spend their daily time between
-three types of activities: \* `VeryActiveMinutes` \*
-`FairlyActiveMinutes` \* `VeryLightlyActiveMinutes`
+three types of activities: * `VeryActiveMinutes` *
+`FairlyActiveMinutes` * `VeryLightlyActiveMinutes`
 
 We can use **histograms** to check how are this *minutes* distributed
 accross users:
@@ -847,7 +850,7 @@ sns.histplot(data = not_logged_day_df, x = 'TotalMinutes');
 plt.show()
 ```
 
-### **Sleeping habits and week day distributions**
+### Sleeping habits and week day distributions
 
 We can use **histograms** again to see the distribution of sleeping time
 for all users.
@@ -908,7 +911,7 @@ sns.boxplot(x="dow", y="avg_distance", data=activity_dist, ax=axes[2]);
 plt.show()
 ```
 
-### **Distribution of calories and distance**
+### Distribution of calories and distance
 
 ```{python}
 fig, axes = plt.subplots(1, 2, figsize=(22, 5))
@@ -923,7 +926,7 @@ plt.show()
 The distribution of burned calories is a bit skewed to the low calories
 while the distance distribtion is higly skewed to lower distances.
 
-### **How does sedentary minutes change in weekends?**
+### How does sedentary minutes change in weekends?
 
 First of all, not considering the day of the week, let's take a look at
 the distribtuion of `SedentaryMinutes`:
@@ -1024,14 +1027,14 @@ plt.show()
 Group 1 is the more sedentary one as it has a higher median for the
 `SedentaryMinutes` distribution.
 
-#### **Does this behaviour persist on weekends?**
+#### Does this behaviour persist on weekends?
 
 ```{python}
 sns.boxplot(x="UserGroup", y="SedentaryMinutes", hue = 'weekend', data=weekend_check);
 plt.show()
 ```
 
-#### **For the less sedentary group, is there a difference in the shape of the distribution on weekends?**
+#### For the less sedentary group, is there a difference in the shape of the distribution on weekends?
 
 ```{python}
 g = sns.FacetGrid(weekend_check[weekend_check['UserGroup']==0], col="weekend", height=6, aspect=.7)
@@ -1045,14 +1048,14 @@ skewed to the lower numbers, so users may be more active during weekends
 (makes sense since during the week there is probably a lot of sitting
 down and working...).
 
-### **Do average values change on weekends?**
+### Do average values change on weekends?
 
 To inspect how does sedentary minutes, calories, steps and distance
 change during the weekend we'll do a trick with temp tables (there is
 probably a better way, but is the one that worked first for me...).
 
-Steps to our analysis: \* Create a temp table to include a *weekend*
-boolean column \* Get the averages of queried columns in the temp table
+Steps to our analysis: * Create a temp table to include a *weekend*
+boolean column * Get the averages of queried columns in the temp table
 using a GROUP BY statement.
 
 ```{python}
@@ -1098,7 +1101,7 @@ weekend_avgs = pd.read_sql(avg_query, con)
 weekend_avgs
 ```
 
-### **Sleeping habits for each user group**
+### Sleeping habits for each user group
 
 ```{python}
 sleep_df['UserGroup'] = sleep_df['Id'].apply(is_above)
@@ -1161,7 +1164,7 @@ This is an interesting graph: there is a clear tendency of users with
 more minutes asleep to be less sedentary. So, one conclusion might be
 that the more you sleep, the more active you are during the day!
 
-\# 📊\*\*Share\*\*
+# 📊**Share**
 
 Now that we have our analysis and found some interesting patterns, let's
 try to answer our original business question through a story told by our
@@ -1169,24 +1172,23 @@ main visuals.
 
 Just as a reminder, we phrased our question as
 
-\> \*\*How current user trends can guide marketing strategy?\*\*
+##  how current user trends can guide marketing strategy?
 
-\-\--
 
-Before we start \*telling our story with the data\*, let's set the color
+Before we start *telling our story with the data*, let's set the color
 palette for our graphs to match that of the company logo (as seen to the
-left). We can easily do this with Seaborn's \`set_pallete()\` method. To
+left). We can easily do this with Seaborn's `set_pallete()` method. To
 improve readability, we will also increase overall font sizes with the
-\`set_context()\` method.
+`set_context()` method.
 
 We'll start our sharing with some basic descriptions. Our dataset has
-data on \*\*33 different users\*\* who logged their daily activities
-during the period \*\*between 03.12.2016-05.12.2016\*\*.
+data on **33 different users** who logged their daily activities
+during the period **between 03.12.2016-05.12.2016**.
 
-\## \*\*Describing the data\*\*
+## Describing the data
 
-The main data on daily activities is in the \`full_dailyActivity_df\`
-and we can get descriptive statistics with the \`describe()\` method:
+The main data on daily activities is in the `full_dailyActivity_df`
+and we can get descriptive statistics with the `describe()` method:
 
 ```{python}
 sns.set_palette("flare")
@@ -1199,33 +1201,30 @@ full_dailyActivity_df.loc[:, full_dailyActivity_df.columns != 'Id'].describe().T
 
 ```
 
-For the sleep habits data, we can use the \`describe()\` method on the
-\`sleep_df\` dataframe:
+For the sleep habits data, we can use the `describe()` method on the
+`sleep_df` dataframe:
 
 ```{python}
 sleep_df.loc[:, sleep_df.columns != 'Id'].describe()
 ```
 
-\## \*\*Distributions\*\*
+## Distributions
 
-\### \*\*By acivity type\*\*
+### By acivity type
 
 Three types of activities:
 
-\* Very Active
+* Very Active
 
-\* Fairly Active
+* Fairly Active
 
-\* Lightly Active
+* Lightly Active
 
 ```{python}
 fig, axes = plt.subplots(1, 3, figsize=(22, 5))
 fig.suptitle('Distribution according to activity type')
-
 sns.histplot(data = full_dailyActivity_df, x = 'VeryActiveMinutes', ax = axes[0]);
-
 sns.histplot(data = full_dailyActivity_df, x = 'FairlyActiveMinutes', ax = axes[1]);
-
 sns.histplot(data = full_dailyActivity_df, x = 'LightlyActiveMinutes', ax = axes[2]);
 plt.show()
 ```
@@ -1236,18 +1235,15 @@ logged their activities in a day. For these records:
 ```{python}
 fig, axes = plt.subplots(1, 3, figsize=(22, 5))
 fig.suptitle('Distribution according to activity type - Partial day logged')
-
 sns.histplot(data = not_logged_day_df, x = 'VeryActiveMinutes', ax = axes[0]);
-
 sns.histplot(data = not_logged_day_df, x = 'FairlyActiveMinutes', ax = axes[1]);
-
 sns.histplot(data = not_logged_day_df, x = 'LightlyActiveMinutes', ax = axes[2]);
 plt.show()
 ```
 
-The \`LightlyActiveMinutes\` distribution is very symmetric with no peak
+The `LightlyActiveMinutes` distribution is very symmetric with no peak
 at very few minutes of activity. Users who log the entire day may end up
-registering a lot of \`LightlyActiveMinutes\` while those who log only a
+registering a lot of `LightlyActiveMinutes` while those who log only a
 part of the day might be registering only activities with higher demand.
 
 Let's see the distribution of total logged time in this second group.
@@ -1258,7 +1254,7 @@ plt.title('Logged minutes for partially logged days');
 plt.show()
 ```
 
-\### \*\*Calories and Distance\*\*
+### Calories and Distance
 
 ```{python}
 fig, axes = plt.subplots(1, 2, figsize=(22, 5))
@@ -1273,21 +1269,19 @@ plt.show()
 The distribution of burned calories is a bit skewed to the low calories
 while the distance distribtion is highly skewed to lower distances.
 
-\### \*\*Sleeping habits\*\*
+### Sleeping habits
 
 ```{python}
 sns.histplot(data = sleep_df, x = 'TotalMinutesAsleep')
 plt.title('Daily minutes asleep')
-
 plt.axvline(420, 0, 65, color='black', ls = '--', lw = 3);
-
 plt.annotate('182 records', (100,50))
 plt.annotate('231 records', (650,50))
 plt.annotate('7h of sleep', (380,30), color='red')
 plt.show()
 ```
 
-\## \*\*Day of the week: does it make a difference?\*\*
+## Day of the week: does it make a difference?
 
 Now that we had a galnce at our data and its distributions, does the day
 of the week make a considerable difference in user behavious to justify
@@ -1311,7 +1305,7 @@ With the current data, there is no considerable difference between the
 average Steps Taken, Calories Burned or Distance across different days
 of the week.
 
-\### \*\*Sleep across days of the week\*\*
+### Sleep across days of the week
 
 ```{python}
 sns.boxplot(x="dow", y="TotalMinutesAsleep", data=sleep_df,
@@ -1320,10 +1314,10 @@ plt.show()
 ```
 
 There is no clear distinction between the days of the week. However we
-can see that sunday has the largest median for \`TotalMinutesAsleep\`
+can see that sunday has the largest median for `TotalMinutesAsleep`
 and saturday appears to be the most spread oout distribution.
 
-\## \*\*Do calories burned depend on steps taken?\*\*
+## Do calories burned depend on steps taken?
 
 ```{python}
 get_regression(full_dailyActivity_df)
@@ -1335,30 +1329,30 @@ plt.show()
 As expected the amount of calories burned in a day grows as the user
 takes more steps. An inetersting fact is that the intercept of the
 regression line represents the amount of burned calories in a day with
-\*\*no steps\*\* taken. This is the amount of calories users are burning
+**no steps** taken. This is the amount of calories users are burning
 in a very sedentary day. According to the [Healthline
-site]([https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),](https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),)
-this number corresponds to the \*basal metabolic rate\*:
+site](%5Bhttps://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),](<https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn>),)
+this number corresponds to the *basal metabolic rate*:
 
-\> Your basal metabolic rate (BMR), on the other hand, represents the
-number of calories you individually burn a day at rest, or while you're
-sedentary. This includes sleeping and sitting.
+Stay safe everyone! Your basal metabolic rate (BMR), on the other
+hand, represents the number of calories you individually burn a day at
+rest, or while you're sedentary. This includes sleeping and sitting.
 
 To compare these estimates with our data, we can get the intercept value
-with a \*\*simple linear regression\*\*. In our data, this value is
-\~1689.15 Calories. We can get some descriptive statistics for the
-\*BMR\*:
+with a **simple linear regression**. In our data, this value is
+~1689.15 Calories. We can get some descriptive statistics for the
+*BMR*:
 
 ```{python}
 full_dailyActivity_df[full_dailyActivity_df['TotalSteps']==0]['Calories'].describe()
 ```
 
-\## \*\*Categorizing users\*\*
+## Categorizing users
 
 Now that we know a bit more about users activities, can we categorize
 our users in a way that is natural from the data?
 
-\### \*\*How much time in a day do users spend being sedentary?\*\*
+### How much time in a day do users spend being sedentary?
 
 ```{python}
 g = sns.FacetGrid(weekend_check, col="weekend", height=6, aspect=.7)
@@ -1372,30 +1366,30 @@ plt.show()
 ```
 
 It seems there are two groups of users based on the distribution of
-\`SedentaryMinutes\`.
+`SedentaryMinutes`.
 
-We can see the average \`SedentaryMinutes\` per user:
+We can see the average `SedentaryMinutes` per user:
 
 ```{python}
 avg_sed_minutes
 ```
 
 Calling group 1 the more sedentary one and group 0 the less sedentary
-one, we can ask if \*\*this behaviour persist on weekends?\*\*
+one, we can ask if **this behaviour persist on weekends?**
 
 ```{python}
 sns.boxplot(x="UserGroup", y="SedentaryMinutes", hue = 'weekend', data=weekend_check);
 plt.show()
 ```
 
-\### \*\*Do average values change on weekends?\*\*
+### Do average values change on weekends?
 
 ```{python}
 weekend_avgs
 
 ```
 
-\## \*\*Do sleep habits influence sedentary time?\*\*
+## Do sleep habits influence sedentary time?
 
 ```{python}
 sns.regplot(data = activity_sleep_df,
@@ -1409,60 +1403,62 @@ with more minutes asleep to be less sedentary\*\*. So, one conclusion
 might be that the more you sleep, the more active you are during the
 day!
 
-\-\--
 
-\# 🎬\*\*Act\*\*
+# 🎬**Act**
 
-Using only the daily activity from our 33 users we reached some
-interesting conclusions!
+From the daily activity of our 33 users, we found some interesting
+insights that can guide the development of our product!
 
-Top high-level insights:
+Firstly, we noticed that there is *no clear distinction in user activity
+across different days of the week*. This suggests that any motivation or
+gamification features of our product should be consistent throughout the
+week to encourage sustained engagement.
 
-\* There is \*\*no clear distinction in user activity across different
-days of the week\*\*;
+In terms of step count, the *average number of steps taken daily is
+around 7670*. According to the *Centers for Disease Control and
+Prevention (CDC)*, higher daily step counts were associated with lower
+mortality risk from all causes. If our product can output the number of
+steps in real-time, we can motivate users to reach a certain number of
+steps daily. To be specific, taking 8,000 steps per day was associated
+with a 51% lower risk for all-cause mortality compared with taking 4,000
+steps per day, and taking 12,000 steps per day was associated with a 65%
+lower risk.
 
-\* The average number of steps taken daily is around 7670. According to
-the
-[CDC]([https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):](https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):)
+Moreover, there is a *linear relation between steps taken and calories
+burned*. Our step monitor could use user data to fit a model and predict
+how many steps a user should take to burn a certain amount of calories.
+Further investigation into the Metabolic Equivalent of Task (MET) data
+could be very useful to this.
 
-\> ...higher daily step counts were associated with lower mortality risk
-from all causes.
+Lastly, we found that *sedentary minutes decrease as the number of
+minutes asleep increases*. This implies that another goal of the product
+could be to motivate users to keep a consistent and sufficient sleeping
+schedule. Consistent physical activity has many benefits, including
+reducing the risk of obesity, heart disease, type 2 diabetes, and some
+cancers, and on a daily basis, it can help people feel and sleep better.
 
-If our product can output the number of steps in real time, we can
-\*\*motivate users to reach a certain number of steps daily\*\*! Once
-again, the CDC informs us that
+Overall, these insights provide a solid foundation for the development
+of our product, and we're excited to see how we can leverage this
+information to create a useful and engaging tool for our users!
 
-\> ...compared with taking 4,000 steps per day, a number considered to
-be low for adults, taking 8,000 steps per day was associated with a 51%
-lower risk for all-cause mortality (or death from all causes). Taking
-12,000 steps per day was associated with a 65% lower risk compared with
-taking 4,000 steps.
 
-\* If the goal is to burn some calories, there is a \*\*linear relation
-between steps taken and calories burned\*\*. Our step monitor could use
-user data to fit a model and predict how many steps a user should take
-to reach a certain amount of calories burned. Further investigation into
-the \*MET\* data could be very useful to this.
 
-\* Regarding sleeping habits, there was a clear decrease of sedentary
-minutes as the number of minutes asleep increased. So, another goal of
-the product could be to motivate users to keep a consistent and
-sufficient sleeping schedule. Going back to the
-[CDC]([https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):](https://www.cdc.gov/media/releases/2020/p0324-daily-step-count.html):)
+ **Thank you so much for reading this Case Study!**
 
-\> Being physically active has many benefits, including reducing a
-person's risk of obesity, heart disease, type 2 diabetes, and some
-cancers. And on a daily basis, it can help people feel better and sleep
-better.
+I really enjoyed working on this project and learned a lot throughout
+the process. While there were certainly challenges along the way, I
+found that the sense of satisfaction I got from *overcoming those
+challenges* and seeing the peices come together was incredibly
+rewarding.
 
-\-\--
+Of course, there's always room for improvement and I'm already thinking
+about ways to refine my approach and build on what I learned. But
+overall, I'm very *proud* of what I was able to accomplish and
+*grateful* for the opportunity to work on this Case Study.
 
-\# \*\*Thank you so much for reading this project!\*\*
+I'm always looking for ways to learn and grow in my field, and I feel
+like this Case Study was a great step in that direction. Thank you for
+considering my work, and I look forward to continuing to *improve* and
+take on new challenges in the future.
 
-It was a lot of fun and there is surely room for improvement! This is a
-project I truly intent to get back to when my skills and knowledge of
-the field are sharper.
-
-\*\*Any feedback would be amazing!\*\*
-
-Stay safe everyone!
+**Any feedback would be amazing!**
