@@ -1,5 +1,5 @@
 ---
-title: "analysis phases"
+title: "Analysis Phases"
 date: "`r Sys.Date()`"
 author: Ayaan Sharif
 output:
@@ -23,7 +23,31 @@ library(reticulate)
 knitr::knit_engines$set(python = reticulate::eng_python)  
 ```
 
-# 🤔**Ask**:
+# Report
+
+### We will present the insights following the steps of the data analysis process:
+
+🤔**Ask**: We identified the problem to be solved and how our insights
+can guide business decisions.
+
+💻**Prepare**: We gathered the relevant data, organized it, and verified
+data integrity and credibility.
+
+🧰**Process**: We selected tools to handle the data, cleaned it, and
+ensured it was ready for analysis. We documented the cleaning process
+and saved the cleaned data.
+
+🧑🏻‍💻**Analyze**: We organized and formatted the data to answer our
+questions, performed calculations, and identified trends and
+relationships within the data.
+
+📊**Share**: We created visualizations to share the most relevant
+findings and related them to the original questions.
+
+🎬**Act**: We presented the final conclusions and suggested an approach
+to deal with the findings and next steps.
+
+# 🤔**Ask**
 
 ## The business task
 
@@ -43,7 +67,7 @@ Bellabeat marketing strategy.
     responsible for collecting, analyzing, and reporting data that helps
     guide Bellabeat's marketing strategy.
 
-# 💻**Prepare**:
+# 💻**Prepare**
 
 ## Getting the data
 
@@ -632,7 +656,7 @@ plt.show()
 ```
 
 That looks good! And, from our user data we see that the predicted *BMR*
-is ~1665.74 (between those predicted for the 35-year-old woman and
+is \~1665.74 (between those predicted for the 35-year-old woman and
 man). We can further get information on the *BMR* of our users if we
 filter only the data points with zero steps taken and get the statistics
 on the Calories distribution. This can be done with the `describe`
@@ -723,13 +747,13 @@ get_regression(full_dailyActivity_df)
 ```
 
 Wihtout the outliers, our fit has a slightly higher intercept of
-~1689.15 (correspondong to the *BMR*).
+\~1689.15 (correspondong to the *BMR*).
 
 ### Distribution according to type of activity
 
 Excluding `SedentaryMinutes`, all users spend their daily time between
-three types of activities: * `VeryActiveMinutes` *
-`FairlyActiveMinutes` * `VeryLightlyActiveMinutes`
+three types of activities: \* `VeryActiveMinutes`
+*`FairlyActiveMinutes`* `VeryLightlyActiveMinutes`
 
 We can use **histograms** to check how are this *minutes* distributed
 accross users:
@@ -1054,8 +1078,8 @@ To inspect how does sedentary minutes, calories, steps and distance
 change during the weekend we'll do a trick with temp tables (there is
 probably a better way, but is the one that worked first for me...).
 
-Steps to our analysis: * Create a temp table to include a *weekend*
-boolean column * Get the averages of queried columns in the temp table
+Steps to our analysis: \* Create a temp table to include a *weekend*
+boolean column \* Get the averages of queried columns in the temp table
 using a GROUP BY statement.
 
 ```{python}
@@ -1172,8 +1196,7 @@ main visuals.
 
 Just as a reminder, we phrased our question as
 
-##  how current user trends can guide marketing strategy?
-
+## how current user trends can guide marketing strategy?
 
 Before we start *telling our story with the data*, let's set the color
 palette for our graphs to match that of the company logo (as seen to the
@@ -1182,13 +1205,13 @@ improve readability, we will also increase overall font sizes with the
 `set_context()` method.
 
 We'll start our sharing with some basic descriptions. Our dataset has
-data on **33 different users** who logged their daily activities
-during the period **between 03.12.2016-05.12.2016**.
+data on **33 different users** who logged their daily activities during
+the period **between 03.12.2016-05.12.2016**.
 
 ## Describing the data
 
-The main data on daily activities is in the `full_dailyActivity_df`
-and we can get descriptive statistics with the `describe()` method:
+The main data on daily activities is in the `full_dailyActivity_df` and
+we can get descriptive statistics with the `describe()` method:
 
 ```{python}
 sns.set_palette("flare")
@@ -1214,11 +1237,11 @@ sleep_df.loc[:, sleep_df.columns != 'Id'].describe()
 
 Three types of activities:
 
-* Very Active
+-   Very Active
 
-* Fairly Active
+-   Fairly Active
 
-* Lightly Active
+-   Lightly Active
 
 ```{python}
 fig, axes = plt.subplots(1, 3, figsize=(22, 5))
@@ -1314,8 +1337,8 @@ plt.show()
 ```
 
 There is no clear distinction between the days of the week. However we
-can see that sunday has the largest median for `TotalMinutesAsleep`
-and saturday appears to be the most spread oout distribution.
+can see that sunday has the largest median for `TotalMinutesAsleep` and
+saturday appears to be the most spread oout distribution.
 
 ## Do calories burned depend on steps taken?
 
@@ -1329,18 +1352,18 @@ plt.show()
 As expected the amount of calories burned in a day grows as the user
 takes more steps. An inetersting fact is that the intercept of the
 regression line represents the amount of burned calories in a day with
-**no steps** taken. This is the amount of calories users are burning
-in a very sedentary day. According to the [Healthline
+**no steps** taken. This is the amount of calories users are burning in
+a very sedentary day. According to the [Healthline
 site](%5Bhttps://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn),](<https://www.healthline.com/health/calories-burned-sleeping#Determining-how-many-calories-you-burn>),)
 this number corresponds to the *basal metabolic rate*:
 
-Stay safe everyone! Your basal metabolic rate (BMR), on the other
-hand, represents the number of calories you individually burn a day at
-rest, or while you're sedentary. This includes sleeping and sitting.
+Stay safe everyone! Your basal metabolic rate (BMR), on the other hand,
+represents the number of calories you individually burn a day at rest,
+or while you're sedentary. This includes sleeping and sitting.
 
 To compare these estimates with our data, we can get the intercept value
 with a **simple linear regression**. In our data, this value is
-~1689.15 Calories. We can get some descriptive statistics for the
+\~1689.15 Calories. We can get some descriptive statistics for the
 *BMR*:
 
 ```{python}
@@ -1403,7 +1426,6 @@ with more minutes asleep to be less sedentary\*\*. So, one conclusion
 might be that the more you sleep, the more active you are during the
 day!
 
-
 # 🎬**Act**
 
 From the daily activity of our 33 users, we found some interesting
@@ -1441,9 +1463,7 @@ Overall, these insights provide a solid foundation for the development
 of our product, and we're excited to see how we can leverage this
 information to create a useful and engaging tool for our users!
 
-
-
- **Thank you so much for reading this Case Study!**
+**Thank you so much for reading this Case Study!**
 
 I really enjoyed working on this project and learned a lot throughout
 the process. While there were certainly challenges along the way, I

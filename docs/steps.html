@@ -9,7 +9,7 @@
     
         <meta name="date" content="2023-02-24" />
     
-    <title>analysis phases</title>
+    <title>Analysis Phases</title>
 
         <script src="site_libs/header-attrs-2.20/header-attrs.js"></script>
         <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -119,7 +119,8 @@
         <div class="Sidebar">
           <div class="SidebarItems" id="toc">
             <ul>
-            <li><a href="#ask" id="toc-ask">🤔<strong>Ask</strong>:</a>
+            <li><a href="#report" id="toc-report">Report</a></li>
+            <li><a href="#ask" id="toc-ask">🤔<strong>Ask</strong></a>
             <ul>
             <li><a href="#the-business-task"
             id="toc-the-business-task">The business task</a></li>
@@ -127,7 +128,7 @@
             id="toc-the-stakeholders">The stakeholders</a></li>
             </ul></li>
             <li><a href="#prepare"
-            id="toc-prepare">💻<strong>Prepare</strong>:</a>
+            id="toc-prepare">💻<strong>Prepare</strong></a>
             <ul>
             <li><a href="#getting-the-data"
             id="toc-getting-the-data">Getting the data</a></li>
@@ -225,7 +226,7 @@
         </div><!--/.container -->
       </div><!--/.navbar -->
         
-      <h1 class="title">analysis phases</h1>
+      <h1 class="title">Analysis Phases</h1>
       
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Ayaan Sharif
@@ -238,8 +239,31 @@
    
 <!-- Don't indent these lines or it will mess pre blocks indentation --> 
 <div class="page-content has-page-title">
+<div id="report" class="section level1">
+<h1>Report</h1>
+<div
+id="we-will-present-the-insights-following-the-steps-of-the-data-analysis-process"
+class="section level3">
+<h3>We will present the insights following the steps of the data
+analysis process:</h3>
+<p>🤔<strong>Ask</strong>: We identified the problem to be solved and
+how our insights can guide business decisions.</p>
+<p>💻<strong>Prepare</strong>: We gathered the relevant data, organized
+it, and verified data integrity and credibility.</p>
+<p>🧰<strong>Process</strong>: We selected tools to handle the data,
+cleaned it, and ensured it was ready for analysis. We documented the
+cleaning process and saved the cleaned data.</p>
+<p>🧑🏻‍💻<strong>Analyze</strong>: We organized and formatted the data to
+answer our questions, performed calculations, and identified trends and
+relationships within the data.</p>
+<p>📊<strong>Share</strong>: We created visualizations to share the most
+relevant findings and related them to the original questions.</p>
+<p>🎬<strong>Act</strong>: We presented the final conclusions and
+suggested an approach to deal with the findings and next steps.</p>
+</div>
+</div>
 <div id="ask" class="section level1">
-<h1>🤔<strong>Ask</strong>:</h1>
+<h1>🤔<strong>Ask</strong></h1>
 <div id="the-business-task" class="section level2">
 <h2>The business task</h2>
 <p>Analyze smart device usage data in order to gain insight into how
@@ -263,7 +287,7 @@ helps guide Bellabeat’s marketing strategy.</li>
 </div>
 </div>
 <div id="prepare" class="section level1">
-<h1>💻<strong>Prepare</strong>:</h1>
+<h1>💻<strong>Prepare</strong></h1>
 <div id="getting-the-data" class="section level2">
 <h2>Getting the data</h2>
 <p>To answer our main question (<em>How current user trends can guide
@@ -367,7 +391,7 @@ rows of data from the first inserted table.</p>
 query:</p>
 <pre class="python"><code># Listing all tables
 cur.execute(&quot;SELECT name FROM sqlite_master WHERE type=&#39;table&#39;;&quot;)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>tables = cur.fetchall()
 print(tables)</code></pre>
 <pre><code>## [(&#39;dailyActivity_merged&#39;,), (&#39;dailyCalories_merged&#39;,), (&#39;dailyIntensities_merged&#39;,), (&#39;dailySteps_merged&#39;,), (&#39;heartrate_seconds_merged&#39;,), (&#39;hourlyCalories_merged&#39;,), (&#39;hourlyIntensities_merged&#39;,), (&#39;hourlySteps_merged&#39;,), (&#39;minuteCaloriesNarrow_merged&#39;,), (&#39;minuteCaloriesWide_merged&#39;,), (&#39;minuteIntensitiesNarrow_merged&#39;,), (&#39;minuteIntensitiesWide_merged&#39;,), (&#39;minuteMETsNarrow_merged&#39;,), (&#39;minuteSleep_merged&#39;,), (&#39;minuteStepsNarrow_merged&#39;,), (&#39;minuteStepsWide_merged&#39;,), (&#39;sleepDay_merged&#39;,), (&#39;weightLogInfo_merged&#39;,)]</code></pre>
@@ -426,7 +450,7 @@ SELECT VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, Sedent
 FROM dailyIntensities_merged;
 &quot;&quot;&quot;
 cur.execute(query)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>print(cur.fetchall())</code></pre>
 <pre><code>## []</code></pre>
 <p>The same ideia applies to tables <code>dailyActivity_merged</code>
@@ -441,7 +465,7 @@ EXCEPT
 SELECT StepTotal from dailySteps_merged;
 &quot;&quot;&quot;
 cur.execute(query)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>print(cur.fetchall())</code></pre>
 <pre><code>## []</code></pre>
 <p>We repeat the same process for column <code>Calories</code> in
@@ -452,7 +476,7 @@ EXCEPT
 SELECT Calories from dailyCalories_merged;
 &quot;&quot;&quot;
 cur.execute(query)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>print(cur.fetchall())</code></pre>
 <pre><code>## []</code></pre>
 <p>So, tables <code>dailyIntensities_merged</code>,
@@ -510,7 +534,7 @@ UPDATE dailyActivity_merged set ActivityDate =
     END;
 &quot;&quot;&quot;
 cur.execute(update_date)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>con.commit()
 con.close()</code></pre>
 <p>To commit the changes we use the <code>commit()</code> method in our
@@ -585,7 +609,7 @@ UPDATE sleepDay_merged set SleepDay =
     END;
 &quot;&quot;&quot;
 cur.execute(update_date)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e628328f0&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f150be348f0&gt;</code></pre>
 <pre class="python"><code>con.commit()
 con.close()</code></pre>
 <pre class="python"><code>con = sql.connect(&quot;fitbit.db&quot;)
@@ -662,7 +686,7 @@ tables to create helper dataframes.</p>
 <p>First, a sanity check on our daily activity table:</p>
 <pre class="python"><code># Different users
 cur.execute(&quot;SELECT COUNT(DISTINCT Id) FROM dailyActivity_merged;&quot;)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>print(&#39;Different users: &#39;, cur.fetchall()[0][0])</code></pre>
 <pre><code>## Different users:  33</code></pre>
 <div
@@ -989,7 +1013,7 @@ class="section level3">
 <h3>Distribution according to type of activity</h3>
 <p>Excluding <code>SedentaryMinutes</code>, all users spend their daily
 time between three types of activities: * <code>VeryActiveMinutes</code>
-<em> <code>FairlyActiveMinutes</code> </em>
+<em><code>FairlyActiveMinutes</code></em>
 <code>VeryLightlyActiveMinutes</code></p>
 <p>We can use <strong>histograms</strong> to check how are this
 <em>minutes</em> distributed accross users:</p>
@@ -1245,7 +1269,7 @@ plt.show()</code></pre>
 <p><img src="steps_files/figure-html/unnamed-chunk-50-35.png" width="806" /></p>
 <p>The average <code>SedentaryMinutes</code> is given by:</p>
 <pre class="python"><code>cur.execute(&quot;SELECT AVG(SedentaryMinutes) FROM dailyActivity_merged;&quot;)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>sedMinAvg = cur.fetchall()[0][0]
 print(sedMinAvg)</code></pre>
 <pre><code>## 991.2106382978724</code></pre>
@@ -1344,7 +1368,7 @@ cur.execute(temp_query)
 
 
 # Get averages from SQL GROUP BY statement</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f3e67389d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
 <pre class="python"><code>avg_query = &quot;&quot;&quot;
 SELECT 
     weekend,
