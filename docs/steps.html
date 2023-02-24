@@ -9,7 +9,7 @@
     
         <meta name="date" content="2023-02-24" />
     
-    <title>Analysis Phases</title>
+    <title>  Analysis Phases</title>
 
         <script src="site_libs/header-attrs-2.20/header-attrs.js"></script>
         <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
@@ -226,7 +226,7 @@
         </div><!--/.container -->
       </div><!--/.navbar -->
         
-      <h1 class="title">Analysis Phases</h1>
+      <h1 class="title"><br> Analysis Phases</h1>
       
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Ayaan Sharif
@@ -391,7 +391,7 @@ rows of data from the first inserted table.</p>
 query:</p>
 <pre class="python"><code># Listing all tables
 cur.execute(&quot;SELECT name FROM sqlite_master WHERE type=&#39;table&#39;;&quot;)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61faabd50&gt;</code></pre>
 <pre class="python"><code>tables = cur.fetchall()
 print(tables)</code></pre>
 <pre><code>## [(&#39;dailyActivity_merged&#39;,), (&#39;dailyCalories_merged&#39;,), (&#39;dailyIntensities_merged&#39;,), (&#39;dailySteps_merged&#39;,), (&#39;heartrate_seconds_merged&#39;,), (&#39;hourlyCalories_merged&#39;,), (&#39;hourlyIntensities_merged&#39;,), (&#39;hourlySteps_merged&#39;,), (&#39;minuteCaloriesNarrow_merged&#39;,), (&#39;minuteCaloriesWide_merged&#39;,), (&#39;minuteIntensitiesNarrow_merged&#39;,), (&#39;minuteIntensitiesWide_merged&#39;,), (&#39;minuteMETsNarrow_merged&#39;,), (&#39;minuteSleep_merged&#39;,), (&#39;minuteStepsNarrow_merged&#39;,), (&#39;minuteStepsWide_merged&#39;,), (&#39;sleepDay_merged&#39;,), (&#39;weightLogInfo_merged&#39;,)]</code></pre>
@@ -450,7 +450,7 @@ SELECT VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, Sedent
 FROM dailyIntensities_merged;
 &quot;&quot;&quot;
 cur.execute(query)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61faabd50&gt;</code></pre>
 <pre class="python"><code>print(cur.fetchall())</code></pre>
 <pre><code>## []</code></pre>
 <p>The same ideia applies to tables <code>dailyActivity_merged</code>
@@ -465,7 +465,7 @@ EXCEPT
 SELECT StepTotal from dailySteps_merged;
 &quot;&quot;&quot;
 cur.execute(query)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61faabd50&gt;</code></pre>
 <pre class="python"><code>print(cur.fetchall())</code></pre>
 <pre><code>## []</code></pre>
 <p>We repeat the same process for column <code>Calories</code> in
@@ -476,7 +476,7 @@ EXCEPT
 SELECT Calories from dailyCalories_merged;
 &quot;&quot;&quot;
 cur.execute(query)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61faabd50&gt;</code></pre>
 <pre class="python"><code>print(cur.fetchall())</code></pre>
 <pre><code>## []</code></pre>
 <p>So, tables <code>dailyIntensities_merged</code>,
@@ -534,7 +534,7 @@ UPDATE dailyActivity_merged set ActivityDate =
     END;
 &quot;&quot;&quot;
 cur.execute(update_date)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61faabd50&gt;</code></pre>
 <pre class="python"><code>con.commit()
 con.close()</code></pre>
 <p>To commit the changes we use the <code>commit()</code> method in our
@@ -609,7 +609,7 @@ UPDATE sleepDay_merged set SleepDay =
     END;
 &quot;&quot;&quot;
 cur.execute(update_date)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f150be348f0&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61b69e8f0&gt;</code></pre>
 <pre class="python"><code>con.commit()
 con.close()</code></pre>
 <pre class="python"><code>con = sql.connect(&quot;fitbit.db&quot;)
@@ -686,7 +686,7 @@ tables to create helper dataframes.</p>
 <p>First, a sanity check on our daily activity table:</p>
 <pre class="python"><code># Different users
 cur.execute(&quot;SELECT COUNT(DISTINCT Id) FROM dailyActivity_merged;&quot;)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61d3d3260&gt;</code></pre>
 <pre class="python"><code>print(&#39;Different users: &#39;, cur.fetchall()[0][0])</code></pre>
 <pre><code>## Different users:  33</code></pre>
 <div
@@ -1269,7 +1269,7 @@ plt.show()</code></pre>
 <p><img src="steps_files/figure-html/unnamed-chunk-50-35.png" width="806" /></p>
 <p>The average <code>SedentaryMinutes</code> is given by:</p>
 <pre class="python"><code>cur.execute(&quot;SELECT AVG(SedentaryMinutes) FROM dailyActivity_merged;&quot;)</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61d3d3260&gt;</code></pre>
 <pre class="python"><code>sedMinAvg = cur.fetchall()[0][0]
 print(sedMinAvg)</code></pre>
 <pre><code>## 991.2106382978724</code></pre>
@@ -1368,7 +1368,7 @@ cur.execute(temp_query)
 
 
 # Get averages from SQL GROUP BY statement</code></pre>
-<pre><code>## &lt;sqlite3.Cursor object at 0x7f1510989d50&gt;</code></pre>
+<pre><code>## &lt;sqlite3.Cursor object at 0x7fc61d3d3260&gt;</code></pre>
 <pre class="python"><code>avg_query = &quot;&quot;&quot;
 SELECT 
     weekend,

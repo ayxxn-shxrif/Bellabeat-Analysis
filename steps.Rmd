@@ -1,5 +1,5 @@
 ---
-title: "Analysis Phases"
+title: <br> Analysis Phases
 date: "`r Sys.Date()`"
 author: Ayaan Sharif
 output:
@@ -10,8 +10,10 @@ output:
     lightbox: true
     gallery: false
     highlight: tango
-  fig_width: 50  
-  fig_height: 50    
+    prompt: '$'
+    fig_width: 40  # set figure width to 6 inches
+    fig_height: 40  # set figure height to 4 inches
+    fig_caption: true
 editor_options: 
   markdown: 
     wrap: 72
@@ -21,7 +23,10 @@ editor_options:
 library(knitr)  
 library(reticulate)  
 knitr::knit_engines$set(python = reticulate::eng_python)  
+knitr::opts_chunk$set(echo = TRUE, fig.width = 30, fig.height = 30)
+
 ```
+
 
 # Report
 

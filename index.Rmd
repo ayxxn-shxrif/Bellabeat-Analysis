@@ -1,5 +1,7 @@
 ---
-title: "Bellabeat Case Study"
+title: <br> Bellabeat Case Study
+date: "`r Sys.Date()`"
+author: Ayaan Sharif
 output:
   rmdformats::downcute:
     downcute_theme: "chaos"
